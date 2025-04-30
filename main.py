@@ -5,7 +5,7 @@ from activations import relu,soft_max
 from tqdm import tqdm
 from network import back_pass,forward_pass
 from sklearn.metrics import confusion_matrix, ConfusionMatrixDisplay
-
+from loss import cross_entrophy
 
 
 cifar10_classess = [
@@ -24,19 +24,23 @@ cifar10_classess = [
 (x_train, y_train), (x_test, y_test) = cifar10.load_data()
 x_train = x_train.reshape(x_train.shape[0],-1)
 x_test_test = x_test.reshape(x_test.shape[0],-1)
-x_train = x_train / 255.0
-x_test_test = x_test_test / 255.0
+
+mean = np.mean(x_train, axis=0)
+std = np.std(x_train, axis=0)
+
+x_train = (x_train -mean) / (std+1e-8)
+x_test_test = (x_test_test -mean) / (std+1e-8)
 
 np.random.seed(42)
-W1 = np.random.randn(3072,512) * 0.01
+W1 = np.random.randn(3072,512) * np.sqrt(2 / 3072)
 b1 = np.zeros((1,512))
-W2 = np.random.randn(512,256) * 0.01
+W2 = np.random.randn(512,256) * np.sqrt(2 / 512)
 b2 = np.zeros((1,256))
-W3 = np.random.randn(256,10) * 0.01
+W3 = np.random.randn(256,10) * np.sqrt(2 / 256)
 b3 = np.zeros((1,10))
 
 # Training
-def update_params(dW1,db1,dW2,db2,dW3,db3,lr=0.1):
+def update_params(dW1,db1,dW2,db2,dW3,db3,lr=0.01):
   global W1,b1,W2,b2,W3,b3
   W1 -= dW1 * lr
   b1 -= db1 * lr
@@ -46,7 +50,7 @@ def update_params(dW1,db1,dW2,db2,dW3,db3,lr=0.1):
   b3 -= db3 * lr
 
 
-def train(X,y,W1,b1,W2,b2,W3,b3, epochs= 20,batch_size = 32 , lr = 0.1):
+def train(X,y,W1,b1,W2,b2,W3,b3, epochs= 20,batch_size = 64 , lr = 0.001):
   m = X.shape[0]
   for epoch in tqdm(range(epochs)):
     indices = np.random.permutation(m)
@@ -59,9 +63,9 @@ def train(X,y,W1,b1,W2,b2,W3,b3, epochs= 20,batch_size = 32 , lr = 0.1):
       Z1,A1,Z2,A2,Z3,A3 = forward_pass(X_batch,W1,b1,W2,b2,W3,b3)
       dW1,db1,dW2,db2,dW3,db3 = back_pass(X_batch,y_batch,Z1,A1,Z2,A2,Z3,A3,W3,W2)
       
-      update_params(dW1,db1,dW2,db2,dW3,db3,)
-    # if epoch % 5 ==0:
-    #   print(cross_entrophy(forward_pass(X_batch,W1,b1,W2,b2,W3,b3)[-1],y_batch))
+      update_params(dW1,db1,dW2,db2,dW3,db3,lr)
+    if epoch % 5 ==0:
+      print(cross_entrophy(forward_pass(X_batch,W1,b1,W2,b2,W3,b3)[-1],y_batch))
 
 train(x_train,y_train,W1,b1,W2,b2,W3,b3)
 
