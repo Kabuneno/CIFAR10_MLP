@@ -13,5 +13,6 @@ def soft_max(Z):
 
 def one_hot(y):
   res = np.zeros((y.shape[0],10 ))
-  res[np.arange(y.shape[0]),y]=1
+  for i in range (y.shape[0]):
+    res[i,y[i]] = 1
   return res
